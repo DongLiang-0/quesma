@@ -1114,7 +1114,7 @@ func (s *SchemaCheckPass) applyMatchOperator(indexSchema schema.Schema, query *m
 			rhsValue = strings.TrimSuffix(rhsValue, "'")
 
 			ilike := func() model.Expr {
-				return model.NewInfixExpr(lhs, "ILIKE", rhs.Clone())
+				return model.NewInfixExpr(lhs, "MATCH", rhs.Clone())
 			}
 			equal := func() model.Expr {
 				return model.NewInfixExpr(lhs, "=", rhs.Clone())
