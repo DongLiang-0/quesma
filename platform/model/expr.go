@@ -202,6 +202,19 @@ func (t TableRef) Accept(v ExprVisitor) interface{} {
 	return v.VisitTableRef(t)
 }
 
+type GroupByExpr struct {
+	Expr Expr
+}
+
+//
+//func NewGroupByExpr(exprs ...Expr) GroupByExpr {
+//	return GroupByExpr{Exprs: exprs}
+//}
+//
+//func (e GroupByExpr) Accept(v ExprVisitor) interface{} {
+//	return v.VisitGroupBY(e)
+//}
+
 type OrderByDirection int8
 
 const (

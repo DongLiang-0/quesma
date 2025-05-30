@@ -617,6 +617,9 @@ func (s *SchemaCheckPass) applyFullTextField(indexSchema schema.Schema, query *m
 					if (strings.ToUpper(e.Op) == "LIKE" || strings.ToUpper(e.Op) == "ILIKE") && model.AsString(e.Right) == "'%'" {
 						return model.NewLiteral(true)
 					}
+					if strings.ToUpper(e.Op) == "MATCH" {
+						return model.NewLiteral(true)
+					}
 					return model.NewLiteral(false)
 				}
 
@@ -864,7 +867,7 @@ func (s *SchemaCheckPass) convertQueryDateTimeFunctionToClickhouse(indexSchema s
 			if len(e.Args) != 1 {
 				return e
 			}
-			return model.NewFunction("toHour", e.Args[0].Accept(b).(model.Expr))
+			return model.NewFunction("HOUR", e.Args[0].Accept(b).(model.Expr))
 
 			// TODO this is a place for over date/time related functions
 			// add more

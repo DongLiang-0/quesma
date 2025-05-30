@@ -18,12 +18,12 @@ backendConnectors:
   - name: my-clickhouse-data-source
     type: clickhouse-os
     config:
-      url: "clickhouse://clickhouse:9000"
-      adminUrl: "http://localhost:8123/play"
+      url: "clickhouse://10.16.10.6:19000"
+      adminUrl: "http://10.16.10.6:18123/play"
 ingestStatistics: true
 logging:
   path: "logs"
-  level: "info"
+  level: "debug"
   disableFileLogging: false
 processors:
   - name: my-query-processor

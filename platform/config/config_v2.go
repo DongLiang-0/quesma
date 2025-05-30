@@ -117,6 +117,7 @@ type Processor struct {
 
 // An index configuration under this name in IndexConfig
 // specifies the default configuration for all (non-configured) indexes
+// const DefaultWildcardIndexName = "kibana_sample_data_logs"
 const DefaultWildcardIndexName = "*"
 
 // Configuration of QuesmaV1ProcessorQuery and QuesmaV1ProcessorIngest

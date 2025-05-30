@@ -9,7 +9,6 @@ import (
 	"github.com/QuesmaOrg/quesma/platform/util"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -32,9 +31,9 @@ func (v *renderer) VisitColumnRef(e ColumnRef) interface{} {
 	name = strings.TrimSuffix(name, types.MultifieldMapKeysSuffix)
 	name = strings.TrimSuffix(name, types.MultifieldMapValuesSuffix)
 	if len(e.TableAlias) > 0 {
-		return fmt.Sprintf("%s.%s", strconv.Quote(e.TableAlias), strconv.Quote(name))
+		return fmt.Sprintf("%s.%s", util.BackquoteIdentifier(e.TableAlias), util.BackquoteIdentifier(name))
 	} else {
-		return strconv.Quote(name)
+		return util.BackquoteIdentifier(name)
 	}
 }
 
@@ -79,7 +78,7 @@ func (v *renderer) VisitLiteral(l LiteralExpr) interface{} {
 			if util.IsSingleQuoted(val) {
 				withoutPercents = strings.Trim(withoutPercents, "'")
 			}
-			return util.SingleQuote(util.SurroundWithPercents(withoutPercents))
+			return util.SingleQuote(withoutPercents)
 		case FullyEscaped:
 			if util.IsSingleQuoted(val) {
 				return val
@@ -127,7 +126,7 @@ func (v *renderer) VisitInfix(e InfixExpr) interface{} {
 	// I think in the future every infix op should be in braces.
 	if (strings.HasPrefix(e.Op, "_") && e.Op != MatchOperator) || e.Op == "AND" || e.Op == "OR" { // LIKE is without (), so I propose MatchOperator as well
 		return fmt.Sprintf("(%v %v %v)", lhs, e.Op, rhs)
-	} else if strings.Contains(e.Op, "LIKE") || e.Op == MatchOperator || e.Op == "IS" || e.Op == "IN" || e.Op == "NOT IN" || e.Op == "REGEXP" || strings.Contains(e.Op, "UNION") {
+	} else if strings.Contains(e.Op, "LIKE") || strings.Contains(e.Op, "MATCH") || e.Op == MatchOperator || e.Op == "IS" || e.Op == "IN" || e.Op == "NOT IN" || e.Op == "REGEXP" || strings.Contains(e.Op, "UNION") {
 		return fmt.Sprintf("%v %v %v", lhs, e.Op, rhs)
 	} else {
 		return fmt.Sprintf("%v%v%v", lhs, e.Op, rhs)
@@ -153,24 +152,16 @@ func (v *renderer) VisitTableRef(e TableRef) interface{} {
 	var result []string
 
 	if e.DatabaseName != "" {
-		if identifierRegexp.MatchString(e.DatabaseName) {
-			result = append(result, e.DatabaseName)
-		} else {
-			result = append(result, strconv.Quote(e.DatabaseName))
-		}
+		result = append(result, util.BackquoteIdentifier(e.DatabaseName))
 	}
-
-	if identifierRegexp.MatchString(e.Name) {
-		result = append(result, e.Name)
-	} else {
-		result = append(result, strconv.Quote(e.Name))
-	}
+	// append table name
+	result = append(result, util.BackquoteIdentifier(e.Name))
 
 	return strings.Join(result, ".")
 }
 
 func (v *renderer) VisitAliasedExpr(e AliasedExpr) interface{} {
-	return fmt.Sprintf("%s AS %s", e.Expr.Accept(v).(string), strconv.Quote(e.Alias))
+	return fmt.Sprintf("%s AS %s", e.Expr.Accept(v).(string), util.BackquoteIdentifier(e.Alias))
 }
 
 func (v *renderer) VisitSelectCommand(c SelectCommand) interface{} {
@@ -244,7 +235,7 @@ func (v *renderer) VisitSelectCommand(c SelectCommand) interface{} {
 			sb.WriteString(AsString(c.FromClause))
 		} else {
 			// Nested sub-query
-			sb.WriteString(fmt.Sprintf("(%s)", AsString(c.FromClause)))
+			sb.WriteString(fmt.Sprintf("(%s) temp_tab", AsString(c.FromClause)))
 		}
 	}
 	if c.WhereClause != nil {

@@ -648,7 +648,7 @@ func (cw *ClickhouseQueryTranslator) parseMultiMatch(queryMap QueryMap) model.Si
 	i := 0
 	for _, field := range fields {
 		for _, subQ := range subQueries {
-			simpleStat := model.NewInfixExpr(model.NewColumnRef(field), "iLIKE", model.NewLiteral("'%"+subQ+"%'"))
+			simpleStat := model.NewInfixExpr(model.NewColumnRef(field), "MATCH", model.NewLiteral("'"+subQ+"'"))
 			sqls[i] = simpleStat
 			i++
 		}
