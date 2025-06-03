@@ -73,6 +73,7 @@ const (
 	DateTime64 DateTimeType = iota
 	DateTime
 	Invalid
+	datetime
 )
 
 func (c *Column) String() string {
@@ -468,7 +469,7 @@ func NewDefaultBoolAttribute() Attribute {
 }
 
 func (dt DateTimeType) String() string {
-	return []string{"DateTime64", "DateTime", "Invalid"}[dt]
+	return []string{"DateTime64", "DateTime", "datetime", "Invalid"}[dt]
 }
 
 func IsColumnAttributes(colName string) bool {
