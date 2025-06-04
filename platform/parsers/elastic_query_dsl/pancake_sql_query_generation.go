@@ -51,7 +51,7 @@ func (p *pancakeSqlQueryGenerator) generateAccumAggrFunctions(origExpr model.Exp
 	case model.FunctionExpr:
 		origFunc := origExprTyped
 		switch origFunc.Name {
-		case "sum", "sumOrNull", "min", "minOrNull", "max", "maxOrNull":
+		case "sum", "sumOrNull", "min", "max":
 			return origExpr, origFunc.Name, nil
 		case "count", "countIf":
 			return model.NewFunction(origFunc.Name, origFunc.Args...), "sum", nil
