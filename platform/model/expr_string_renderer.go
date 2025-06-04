@@ -161,6 +161,9 @@ func (v *renderer) VisitTableRef(e TableRef) interface{} {
 }
 
 func (v *renderer) VisitAliasedExpr(e AliasedExpr) interface{} {
+	if e.Alias == "" {
+		return fmt.Sprintf("%s ", e.Expr.Accept(v).(string))
+	}
 	return fmt.Sprintf("%s AS %s", e.Expr.Accept(v).(string), util.BackquoteIdentifier(e.Alias))
 }
 

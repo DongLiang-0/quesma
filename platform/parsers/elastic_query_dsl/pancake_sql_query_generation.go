@@ -134,10 +134,14 @@ func (p *pancakeSqlQueryGenerator) generateBucketSqlParts(query *pancakeModel, b
 	// For some group by such as terms, we need total count. We add it in this method.
 	addSelectColumns = append(addSelectColumns, p.addPotentialParentCount(bucketAggregation, groupByColumns)...)
 
+	var tmpGroupBys []model.AliasedExpr
 	for columnId, column := range bucketAggregation.selectedColumns {
 		aliasedColumn := model.NewAliasedExpr(column, bucketAggregation.InternalNameForKey(columnId))
 		addSelectColumns = append(addSelectColumns, aliasedColumn)
-		addGroupBys = append(addGroupBys, aliasedColumn)
+		tmpGroupBys = append(tmpGroupBys, aliasedColumn)
+		// doris not support group by alias
+		groupByAliasedColumn := model.NewAliasedExpr(column, "")
+		addGroupBys = append(addGroupBys, groupByAliasedColumn)
 	}
 
 	// build count for aggr
@@ -160,7 +164,7 @@ func (p *pancakeSqlQueryGenerator) generateBucketSqlParts(query *pancakeModel, b
 			columnId := len(bucketAggregation.selectedColumns) + i
 			direction := orderBy.Direction
 
-			rankColumn := p.isPartOf(orderBy.Expr, append(append(groupByColumns, addGroupBys...),
+			rankColumn := p.isPartOf(orderBy.Expr, append(append(groupByColumns, tmpGroupBys...),
 				// We need count before window functions
 				model.NewAliasedExpr(model.NewCountFunc(), bucketAggregation.InternalNameForCount())))
 			if rankColumn != nil { // rank is part of group by
@@ -181,7 +185,7 @@ func (p *pancakeSqlQueryGenerator) generateBucketSqlParts(query *pancakeModel, b
 							return nil, nil, nil, nil, nil, err
 						}
 						orderByExpr = model.NewWindowFunction(aggFunctionName, []model.Expr{partColumn},
-							p.generatePartitionBy(append(groupByColumns, addGroupBys...)), []model.OrderByExpr{})
+							p.generatePartitionBy(append(groupByColumns, tmpGroupBys...)), []model.OrderByExpr{})
 					}
 					aliasedExpr := model.NewAliasedExpr(orderByExpr, bucketAggregation.InternalNameForOrderBy(columnId))
 					addSelectColumns = append(addSelectColumns, aliasedExpr)
@@ -192,7 +196,7 @@ func (p *pancakeSqlQueryGenerator) generateBucketSqlParts(query *pancakeModel, b
 		}
 
 		// We order by count, but add key to get right dense_rank()
-		for _, addedGroupByAlias := range addGroupBys {
+		for _, addedGroupByAlias := range tmpGroupBys {
 			if !p.isPartOfOrderBy(addedGroupByAlias, rankOrderBy) {
 				rankOrderBy = append(rankOrderBy, model.NewOrderByExpr(addedGroupByAlias.AliasRef(), model.AscOrder))
 			}

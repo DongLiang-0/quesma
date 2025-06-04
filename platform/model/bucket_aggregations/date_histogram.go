@@ -101,7 +101,11 @@ func (query *DateHistogram) TranslateSqlResponseToJson(rows []model.QueryResultR
 		if docCountAsInt < int64(query.minDocCount) {
 			continue
 		}
-		originalKey := query.getKey(row)
+		originalKey, err := query.getKey(row)
+		if err != nil {
+			logger.ErrorWithCtx(query.ctx).Msgf("error parsing key: %v", err)
+			continue
+		}
 		responseKey := query.calculateResponseKey(originalKey)
 		var keyAsString string
 		if query.defaultFormat {
@@ -221,8 +225,24 @@ func (query *DateHistogram) generateSQLForCalendarInterval() model.Expr {
 	return model.InvalidExpr
 }
 
-func (query *DateHistogram) getKey(row model.QueryResultRow) int64 {
-	return row.Cols[len(row.Cols)-2].Value.(int64)
+func (query *DateHistogram) getKey(row model.QueryResultRow) (int64, error) {
+	value := row.Cols[len(row.Cols)-2].Value
+	switch v := value.(type) {
+	case int64:
+		return v, nil
+	case string:
+		// Trying to parse a string as an int64 (e.g. a Unix clock)
+		if parsed, err := strconv.ParseInt(v, 10, 64); err == nil {
+			return parsed, nil
+		}
+		// Or try parsing a date string like "2024-01-01"
+		if t, err := time.Parse(time.RFC3339, v); err == nil {
+			return t.Unix(), nil
+		}
+		return 0, fmt.Errorf("invalid date format: %v", v)
+	default:
+		return 0, fmt.Errorf("unsupported key type: %T", v)
+	}
 }
 
 func (query *DateHistogram) Interval() (interval time.Duration, ok bool) {
