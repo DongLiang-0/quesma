@@ -238,7 +238,7 @@ func (v *renderer) VisitSelectCommand(c SelectCommand) interface{} {
 			sb.WriteString(AsString(c.FromClause))
 		} else {
 			// Nested sub-query
-			sb.WriteString(fmt.Sprintf("(%s) temp_tab", AsString(c.FromClause)))
+			sb.WriteString(fmt.Sprintf("(%s) tmp_tab", AsString(c.FromClause)))
 		}
 	}
 	if c.WhereClause != nil {
@@ -246,7 +246,7 @@ func (v *renderer) VisitSelectCommand(c SelectCommand) interface{} {
 		sb.WriteString(AsString(c.WhereClause))
 	}
 	if c.SampleLimit > 0 {
-		sb.WriteString(fmt.Sprintf(" LIMIT %d)", c.SampleLimit))
+		sb.WriteString(fmt.Sprintf(" LIMIT %d) tmp_tab", c.SampleLimit))
 	}
 
 	groupBy := make([]string, 0, len(c.GroupBy))

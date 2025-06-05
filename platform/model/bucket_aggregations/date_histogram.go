@@ -436,7 +436,21 @@ func (qt *DateHistogramRowsTransformer) Transform(ctx context.Context, rowsFromD
 }
 
 func (qt *DateHistogramRowsTransformer) getKey(row model.QueryResultRow) int64 {
-	return row.Cols[len(row.Cols)-2].Value.(int64)
+	value := row.Cols[len(row.Cols)-2].Value
+	switch v := value.(type) {
+	case int64:
+		return v
+	case string:
+		val, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			logger.Error().Msgf("string conver to int64 failed %T", v, err)
+			return 0
+		}
+		return val
+	default:
+		logger.Error().Msgf("unsupported key type: %T", v)
+		return 0
+	}
 }
 
 func (qt *DateHistogramRowsTransformer) nextKey(key int64) int64 {

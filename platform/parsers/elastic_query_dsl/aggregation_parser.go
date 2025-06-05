@@ -285,7 +285,13 @@ func (cw *ClickhouseQueryTranslator) parseIntField(queryMap QueryMap, fieldName 
 		if asFloat, ok := valueRaw.(float64); ok {
 			return int(asFloat)
 		}
-		logger.WarnWithCtx(cw.Ctx).Msgf("%s is not an float64, but %T, value: %v. Using default: %d", fieldName, valueRaw, valueRaw, defaultValue)
+		if asString, ok := valueRaw.(string); ok {
+			if intValue, err := strconv.Atoi(asString); err == nil {
+				return intValue
+			}
+			logger.WarnWithCtx(cw.Ctx).Msgf("%s is a string but cannot be converted to int, value: %v. Using default: %d", fieldName, asString, defaultValue)
+		}
+		logger.WarnWithCtx(cw.Ctx).Msgf("%s is not an float64 or string, but %T, value: %v. Using default: %d", fieldName, valueRaw, valueRaw, defaultValue)
 	}
 	return defaultValue
 }
