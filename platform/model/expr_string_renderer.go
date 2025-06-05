@@ -290,7 +290,12 @@ func (v *renderer) VisitWindowFunction(f WindowFunction) interface{} {
 	}
 
 	var sb strings.Builder
-	stmtWithoutOrderBy := fmt.Sprintf("%s(%s) OVER (", f.Name, strings.Join(args, ", "))
+	var stmtWithoutOrderBy string
+	if f.Name == "" {
+		stmtWithoutOrderBy = fmt.Sprintf("%s OVER (", strings.Join(args, ", "))
+	} else {
+		stmtWithoutOrderBy = fmt.Sprintf("%s(%s) OVER (", f.Name, strings.Join(args, ", "))
+	}
 	sb.WriteString(stmtWithoutOrderBy)
 
 	if len(f.PartitionBy) > 0 {

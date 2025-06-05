@@ -61,9 +61,24 @@ func (p *pancakeSqlQueryGenerator) generateAccumAggrFunctions(origExpr model.Exp
 			return model.NewFunction(origFunc.Name+"State", origFunc.Args...), origFunc.Name + "Merge", nil
 		}
 
-		if strings.HasPrefix(origFunc.Name, "quantiles") {
-			return model.NewFunction(strings.Replace(origFunc.Name, "quantiles", "quantilesState", 1), origFunc.Args...),
-				strings.Replace(origFunc.Name, "quantiles", "quantilesMerge", 1), nil
+		if strings.HasPrefix(origFunc.Name, "PERCENTILE_APPROX") {
+			if len(origFunc.Args) < 2 {
+				return nil, "", fmt.Errorf("invalid quantiles format, expected 2 arguments")
+			}
+
+			firstArg := origFunc.Args[0]
+			var columnName string
+			if colRef, ok := firstArg.(model.ColumnRef); ok {
+				columnName = colRef.ColumnName
+			}
+
+			secondArg := origFunc.Args[1]
+			var percentileValue float64
+			if literal, ok := secondArg.(model.LiteralExpr); ok {
+				percentileValue = literal.Value.(float64)
+			}
+
+			return model.NewFunction("PERCENTILE_APPROX", model.NewColumnRef(columnName), model.NewLiteral(percentileValue)), "", nil
 		}
 	case model.InfixExpr:
 		origInfix := origExprTyped

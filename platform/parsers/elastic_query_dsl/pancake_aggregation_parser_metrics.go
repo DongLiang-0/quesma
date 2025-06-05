@@ -26,18 +26,26 @@ func generateMetricSelectedColumns(ctx context.Context, metricsAggr metricsAggre
 	case "sum", "min", "max", "avg":
 		result = []model.Expr{model.NewFunction(metricsAggr.AggrType, getFirstExpression())}
 	case "quantile":
+		firstField := metricsAggr.Fields[0]
+		var columnName string
+		if colRef, ok := firstField.(model.ColumnRef); ok {
+			columnName = colRef.ColumnName
+		}
+
 		// Sorting here useful mostly for determinism in tests.
 		// It wasn't there before, and everything worked fine. We could safely remove it, if needed.
 		usersPercents := util.MapKeysSortedByValue(metricsAggr.Percentiles)
 		result = make([]model.Expr, 0, len(usersPercents))
 		for _, usersPercent := range usersPercents {
 			percentAsFloat := metricsAggr.Percentiles[usersPercent]
-			result = append(result, model.FunctionExpr{
-				// Rare function that has two brackets: quantiles(0.5)(x)
-				// https://clickhouse.com/docs/en/sql-reference/aggregate-functions/reference/quantiles
-				Name: fmt.Sprintf("quantiles(%f)", percentAsFloat),
-				Args: []model.Expr{getFirstExpression()}},
-			)
+			// https://doris.apache.org/docs/sql-manual/sql-functions/aggregate-functions/percentile-approx
+			result = append(result, model.NewFunction("PERCENTILE_APPROX", model.NewColumnRef(columnName), model.NewLiteral(percentAsFloat)))
+			//result = append(result, model.FunctionExpr{
+			//	// Rare function that has two brackets: PERCENTILE_APPROX(x, 0.5)
+			//	//https://doris.apache.org/docs/sql-manual/sql-functions/aggregate-functions/percentile-approx
+			//	Name: fmt.Sprintf("PERCENTILE_APPROX(%f)", percentAsFloat),
+			//	Args: []model.Expr{getFirstExpression()}},
+			//)
 		}
 	case "cardinality":
 		// In ElasticSearch it is approximate algorithm
