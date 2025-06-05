@@ -41,7 +41,7 @@ func generateMetricSelectedColumns(ctx context.Context, metricsAggr metricsAggre
 		}
 	case "cardinality":
 		// In ElasticSearch it is approximate algorithm
-		result = []model.Expr{model.NewFunction("uniq", getFirstExpression())}
+		result = []model.Expr{model.NewFunction("NDV", getFirstExpression())}
 
 	case "value_count":
 		result = []model.Expr{model.NewCountFunc(getFirstExpression())}
