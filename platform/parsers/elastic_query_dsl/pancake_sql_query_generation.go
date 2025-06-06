@@ -242,10 +242,10 @@ func (p *pancakeSqlQueryGenerator) addIfCombinator(column model.Expr, whereClaus
 	case model.FunctionExpr:
 		splits := strings.SplitN(function.Name, "(", 2)
 		baseFunctionName := splits[0]
-		functionSuffix := ""
-		if len(splits) > 1 {
-			functionSuffix = "(" + splits[1]
-		}
+		//functionSuffix := ""
+		//if len(splits) > 1 {
+		//	functionSuffix = "(" + splits[1]
+		//}
 
 		if function.Name == "count" {
 			//return model.NewFunction("countIf", whereClause), nil
@@ -260,7 +260,9 @@ func (p *pancakeSqlQueryGenerator) addIfCombinator(column model.Expr, whereClaus
 			return model.NewFunction(function.Name, newArgs...), nil
 		} else if len(function.Args) == 1 {
 			// https://clickhouse.com/docs/en/sql-reference/aggregate-functions/combinators#-if
-			return model.NewFunction(baseFunctionName+"If"+functionSuffix, function.Args[0], whereClause), nil
+			ifFunction := model.NewFunction("IF", whereClause, function.Args[0], model.NullExpr)
+			return model.NewFunction(baseFunctionName, ifFunction), nil
+			//return model.NewFunction(baseFunctionName+"If"+functionSuffix, function.Args[0], whereClause), nil
 		} else {
 			return nil, fmt.Errorf("not implemented -iF for func with more than one argument: %s", model.AsString(column))
 		}
