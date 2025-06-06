@@ -246,7 +246,7 @@ func (v *renderer) VisitSelectCommand(c SelectCommand) interface{} {
 		sb.WriteString(AsString(c.WhereClause))
 	}
 	if c.SampleLimit > 0 {
-		sb.WriteString(fmt.Sprintf(" LIMIT %d) tmp_tab", c.SampleLimit))
+		sb.WriteString(fmt.Sprintf(" LIMIT %d) tmp_tab ", c.SampleLimit))
 	}
 
 	groupBy := make([]string, 0, len(c.GroupBy))
@@ -254,9 +254,29 @@ func (v *renderer) VisitSelectCommand(c SelectCommand) interface{} {
 		groupBy = append(groupBy, AsString(col))
 	}
 	if len(groupBy) > 0 {
-		sb.WriteString(" GROUP BY ")
-		fullGroupBy := groupBy
-		sb.WriteString(strings.Join(fullGroupBy, ", "))
+		var usedKeys []string
+		if c.SampleLimit > 0 {
+			// for doris group by query
+			usedColumns := make(map[string]bool)
+			for _, col := range append(c.Columns, c.GroupBy...) {
+				for _, usedCol := range GetUsedColumns(col) {
+					usedColumns[AsString(usedCol)] = true
+				}
+			}
+			usedKeys = make([]string, 0, len(usedColumns))
+			for key := range usedColumns {
+				usedKeys = append(usedKeys, key)
+			}
+		}
+		if usedKeys != nil {
+			sort.Strings(usedKeys)
+			sb.WriteString(" GROUP BY ")
+			sb.WriteString(strings.Join(usedKeys, ", "))
+		} else {
+			sb.WriteString(" GROUP BY ")
+			fullGroupBy := groupBy
+			sb.WriteString(strings.Join(fullGroupBy, ", "))
+		}
 	}
 
 	orderBy := make([]string, 0, len(c.OrderBy))
