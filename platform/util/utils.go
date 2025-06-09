@@ -767,6 +767,14 @@ func BackquoteIdentifier(identifier string) string {
 	return "`" + identifier + "`"
 }
 
+func ContainsKeyword(str string) bool {
+	str = strings.ToLower(str)
+	if str == ("string") {
+		return true
+	}
+	return false
+}
+
 // IsSingleQuoted checks if a string is single-quoted
 func IsSingleQuoted(s string) bool {
 	return len(s) >= 2 && s[0] == '\'' && s[len(s)-1] == '\''

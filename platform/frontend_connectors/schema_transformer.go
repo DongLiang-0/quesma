@@ -186,15 +186,19 @@ func (s *SchemaCheckPass) applyGeoTransformations(schemaInstance schema.Schema, 
 			lon := model.NewColumnRef(field.InternalPropertyName.AsString() + "_lon")
 			lat := model.NewColumnRef(field.InternalPropertyName.AsString() + "_lat")
 
+			lonFun := model.NewFunction("CAST", model.NewAliasedExpr(model.NewColumnRef(field.InternalPropertyName.AsString()+"_lon"), "string"))
+			latFun := model.NewFunction("CAST", model.NewAliasedExpr(model.NewColumnRef(field.InternalPropertyName.AsString()+"_lat"), "string"))
+
 			// This is a workaround. Clickhouse Point is defined as Tuple. We need to know the type of the tuple.
 			// In this step we merge two columns into single map here. Map is in elastic format.
 
 			// In this point we assume that Quesma point type is stored into two separate columns.
-			replace[field.InternalPropertyName.AsString()] = model.NewFunction("map",
-				model.NewLiteral("'lat'"),
-				lat,
-				model.NewLiteral("'lon'"),
-				lon)
+			replace[field.InternalPropertyName.AsString()] = model.NewFunction("CONCAT",
+				model.NewLiteral("'{\"lat\":'"),
+				latFun,
+				model.NewLiteral("',\"lon\":'"),
+				lonFun,
+				model.NewLiteral("'}'"))
 
 			// these a just if we need multifields support
 			replace[field.InternalPropertyName.AsString()+".lat"] = lat

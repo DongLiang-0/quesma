@@ -164,6 +164,9 @@ func (v *renderer) VisitAliasedExpr(e AliasedExpr) interface{} {
 	if e.Alias == "" {
 		return fmt.Sprintf("%s ", e.Expr.Accept(v).(string))
 	}
+	if util.ContainsKeyword(e.Alias) {
+		return fmt.Sprintf("%s AS %s", e.Expr.Accept(v).(string), e.Alias)
+	}
 	return fmt.Sprintf("%s AS %s", e.Expr.Accept(v).(string), util.BackquoteIdentifier(e.Alias))
 }
 

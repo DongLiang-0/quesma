@@ -258,11 +258,12 @@ func (p *pancakeSqlQueryGenerator) addIfCombinator(column model.Expr, whereClaus
 			copy(newArgs, function.Args)
 			newArgs[len(newArgs)-1] = model.And([]model.Expr{newArgs[len(newArgs)-1], whereClause})
 			return model.NewFunction(function.Name, newArgs...), nil
-		} else if len(function.Args) == 1 {
-			// https://clickhouse.com/docs/en/sql-reference/aggregate-functions/combinators#-if
-			ifFunction := model.NewFunction("IF", whereClause, function.Args[0], model.NullExpr)
+		} else if function.Name == "sum" || function.Name == "avg" {
+			ifFunction := model.NewFunction("IF", whereClause, model.NewLiteral(1), model.NewLiteral(0))
 			return model.NewFunction(baseFunctionName, ifFunction), nil
-			//return model.NewFunction(baseFunctionName+"If"+functionSuffix, function.Args[0], whereClause), nil
+		} else if len(function.Args) == 1 {
+			// min and max function
+			return model.NewFunction(baseFunctionName, function.Args[0]), nil
 		} else {
 			return nil, fmt.Errorf("not implemented -iF for func with more than one argument: %s", model.AsString(column))
 		}
