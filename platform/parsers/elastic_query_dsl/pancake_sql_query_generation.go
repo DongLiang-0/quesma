@@ -59,6 +59,13 @@ func (p *pancakeSqlQueryGenerator) generateAccumAggrFunctions(origExpr model.Exp
 			// TODO: I debate whether make that default
 			// This is ClickHouse specific: https://clickhouse.com/docs/en/sql-reference/aggregate-functions/combinators
 			return model.NewFunction(origFunc.Name+"State", origFunc.Args...), origFunc.Name + "Merge", nil
+		case "NDV":
+			firstArg := origFunc.Args[0]
+			var columnName string
+			if colRef, ok := firstArg.(model.ColumnRef); ok {
+				columnName = colRef.ColumnName
+			}
+			return model.NewFunction("APPROX_COUNT_DISTINCT", model.NewColumnRef(columnName)), "", nil
 		}
 
 		if strings.HasPrefix(origFunc.Name, "PERCENTILE_APPROX") {
