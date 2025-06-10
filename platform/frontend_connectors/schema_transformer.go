@@ -311,7 +311,7 @@ func (s *SchemaCheckPass) applyArrayTransformations(indexSchema schema.Schema, q
 	hasArrayColumn := false
 	for _, col := range allColumns {
 		dbType := arrayTypeResolver.dbColumnType(col.ColumnName)
-		if strings.HasPrefix(dbType, "Array") {
+		if strings.HasPrefix(dbType, "array") {
 			hasArrayColumn = true
 			break
 		}
