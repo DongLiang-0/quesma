@@ -133,6 +133,10 @@ func (v *renderer) VisitInfix(e InfixExpr) interface{} {
 	}
 }
 
+func (v *renderer) VisitGroupByExpr(e GroupByExpr) interface{} {
+	return fmt.Sprintf("%s ", e.Expr.Accept(v).(string))
+}
+
 func (v *renderer) VisitOrderByExpr(e OrderByExpr) interface{} {
 	allExprs := e.Expr.Accept(v).(string)
 	if e.Direction == DescOrder {
